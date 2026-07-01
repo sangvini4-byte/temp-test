@@ -6,7 +6,7 @@ from .hd_data import (
     WHEEL_START_LONGITUDE, GATE_SPAN, LINE_SPAN, GATE_WHEEL_SEQUENCE,
     GATE_TO_CENTER, CHANNELS, MOTOR_CENTERS, CENTERS_ALL,
 )
-from . import incarnation_crosses as _crosses
+import incarnation_crosses as _crosses
 
 HD_PLANETS = {
     "sun", "earth", "moon", "mercury", "venus", "mars",
