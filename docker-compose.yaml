@@ -1,0 +1,40 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      GENERIC_TIMEZONE: Europe/Kyiv
+      TZ: Europe/Kyiv
+      N8N_RUNNERS_ENABLED: "true"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      astrology:
+        condition: service_healthy
+
+  astrology:
+    build:
+      context: ./astrology
+      dockerfile: Dockerfile
+    container_name: astrology
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Опционально: положи .se1 файлы сюда для полной точности Swiss Ephemeris.
+      # Без них pyswisseph использует встроенный Moshier — тоже точный (~1 угл. сек
+      # для современных дат), но Swiss Ephemeris файлы — золотой стандарт индустрии.
+      - ./astrology/ephe:/app/ephe:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  n8n_data:
+
