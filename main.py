@@ -15,11 +15,11 @@ from typing import Optional, Literal
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from . import ephemeris as eph
-from . import jyotish_calc as jc
-from . import jyotish_yogas as jy
-from . import hd_calc
-from . import bazi_calc
+from . ephemeris as eph
+from . jyotish_calc as jc
+from . jyotish_yogas as jy
+from . hd_calc
+from . bazi_calc
 
 # 192_crosses.py начинается с цифры — стандартный import недоступен.
 # hd_calc уже загружает его сам; здесь импорт не нужен.
