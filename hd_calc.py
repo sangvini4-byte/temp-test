@@ -2,7 +2,7 @@
 Преобразование долгот планет в ворота/линии ХД и вывод Типа/Авторитета/Профиля.
 """
 
-from .hd_data import (
+from hd_data import (
     WHEEL_START_LONGITUDE, GATE_SPAN, LINE_SPAN, GATE_WHEEL_SEQUENCE,
     GATE_TO_CENTER, CHANNELS, MOTOR_CENTERS, CENTERS_ALL,
 )
