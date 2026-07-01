@@ -6,7 +6,7 @@
 """
 from datetime import date, timedelta
 import swisseph as swe
-from . import ephemeris as eph
+import ephemeris as eph
 
 swe.set_sid_mode(swe.SIDM_LAHIRI)
 
