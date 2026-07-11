@@ -9,11 +9,11 @@
   - importlib убран — используется стандартный relative import.
 """
 
-from .hd_data import (
+from hd_data import (
     WHEEL_START_LONGITUDE, GATE_SPAN, LINE_SPAN, GATE_WHEEL_SEQUENCE,
     GATE_TO_CENTER, CHANNELS, MOTOR_CENTERS, CENTERS_ALL,
 )
-from . import incarnation_crosses as _crosses
+import incarnation_crosses as _crosses
 
 # Планеты, используемые в Human Design.
 # Lilith и другие нестандартные точки из ephemeris фильтруются здесь.
