@@ -55,7 +55,7 @@ import math
 from datetime import date, timedelta
 from typing import Optional
 
-from . import ephemeris as eph
+import ephemeris as eph
 
 # ────────────────────────── Справочные таблицы ──────────────────────────
 
