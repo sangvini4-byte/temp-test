@@ -1,13 +1,22 @@
 """
 Преобразование долгот планет в ворота/линии ХД и вывод Типа/Авторитета/Профиля.
+
+ИСПРАВЛЕНИЯ (относительно предыдущих версий):
+  - Убраны stray lines ("jupiter", "saturn", ...) внутри dict comprehension
+    и между функциями — вызывали SyntaxError при импорте.
+  - Вызов _incarnation_cross() заменён на _crosses.incarnation_cross() —
+    функция не была определена локально, _crosses это модуль.
+  - importlib убран — используется стандартный relative import.
 """
 
-from hd_data import (
+from .hd_data import (
     WHEEL_START_LONGITUDE, GATE_SPAN, LINE_SPAN, GATE_WHEEL_SEQUENCE,
     GATE_TO_CENTER, CHANNELS, MOTOR_CENTERS, CENTERS_ALL,
 )
-import incarnation_crosses as _crosses
+from . import incarnation_crosses as _crosses
 
+# Планеты, используемые в Human Design.
+# Lilith и другие нестандартные точки из ephemeris фильтруются здесь.
 HD_PLANETS = {
     "sun", "earth", "moon", "mercury", "venus", "mars",
     "jupiter", "saturn", "uranus", "neptune", "pluto",
@@ -22,12 +31,17 @@ def longitude_to_gate_line(longitude: float) -> dict:
     gate = GATE_WHEEL_SEQUENCE[gate_index]
     within_gate = offset - gate_index * GATE_SPAN
     line = int(within_gate // LINE_SPAN) + 1
-    line = min(line, 6)
+    line = min(line, 6)  # защита от пограничного 360.0/0.0 округления
     return {"gate": gate, "line": line}
 
 
 def activations_from_longitudes(longitudes: dict) -> dict:
-    """{'sun': {'longitude':...}, ...} → {'sun': {'gate':25,'line':3}, ...}"""
+    """
+    {'sun': {'longitude':...}, ...} → {'sun': {'gate':25,'line':3}, ...}
+
+    Фильтрует только HD_PLANETS — Lilith и прочие нестандартные точки
+    из ephemeris.all_planet_longitudes() сюда не попадают.
+    """
     return {
         k: longitude_to_gate_line(v["longitude"])
         for k, v in longitudes.items()
@@ -68,26 +82,46 @@ def determine_type_and_strategy(centers: set, channels: list) -> dict:
     throat_connected_to_motor = len(throat_motor_channels) > 0
 
     if len(centers) == 0:
-        return {"type": "Reflector", "strategy": "Ждать 28 дней — лунный цикл",
-                "signature": "Удивление", "not_self_theme": "Разочарование"}
+        return {
+            "type": "Reflector",
+            "strategy": "Ждать 28 дней — лунный цикл",
+            "signature": "Удивление",
+            "not_self_theme": "Разочарование",
+        }
 
     if sacral_defined:
         if throat_connected_to_motor:
-            return {"type": "Manifesting Generator",
-                    "strategy": "Реагировать, затем информировать",
-                    "signature": "Удовлетворение", "not_self_theme": "Фрустрация"}
-        return {"type": "Generator", "strategy": "Реагировать",
-                "signature": "Удовлетворение", "not_self_theme": "Фрустрация"}
+            return {
+                "type": "Manifesting Generator",
+                "strategy": "Реагировать, затем информировать",
+                "signature": "Удовлетворение",
+                "not_self_theme": "Фрустрация",
+            }
+        return {
+            "type": "Generator",
+            "strategy": "Реагировать",
+            "signature": "Удовлетворение",
+            "not_self_theme": "Фрустрация",
+        }
 
     if throat_defined and throat_connected_to_motor:
-        return {"type": "Manifestor", "strategy": "Информировать перед действием",
-                "signature": "Покой", "not_self_theme": "Гнев"}
+        return {
+            "type": "Manifestor",
+            "strategy": "Информировать перед действием",
+            "signature": "Покой",
+            "not_self_theme": "Гнев",
+        }
 
-    return {"type": "Projector", "strategy": "Ждать приглашения",
-            "signature": "Успех", "not_self_theme": "Горечь"}
+    return {
+        "type": "Projector",
+        "strategy": "Ждать приглашения",
+        "signature": "Успех",
+        "not_self_theme": "Горечь",
+    }
 
 
 def determine_authority(centers: set) -> str:
+    # Иерархия авторитета — порядок проверки фиксирован и не переставляется.
     if "solar_plexus" in centers:
         return "Emotional (Solar Plexus)"
     if "sacral" in centers:
@@ -121,6 +155,9 @@ def compute_full_chart(personality_longitudes: dict, design_longitudes: dict) ->
     profile = determine_profile(personality["sun"], design["sun"])
     split_count = _count_definition_splits(centers, channels)
 
+    # Инкарнационный крест — через модуль incarnation_crosses.
+    # ИСПРАВЛЕНИЕ: было _incarnation_cross(...) — функция не существовала.
+    # Правильно: _crosses.incarnation_cross(...)
     try:
         p_sun = personality["sun"]
         d_sun = design["sun"]
@@ -145,13 +182,14 @@ def compute_full_chart(personality_longitudes: dict, design_longitudes: dict) ->
         "undefined_centers": sorted(undefined_centers),
         "defined_channels": [f"{a}-{b}" for a, b in channels],
         "definition_splits": split_count,
-        "personality_activations": personality,
-        "design_activations": design,
+        "personality_activations": personality,   # сознательные (чёрные)
+        "design_activations": design,             # бессознательные (красные)
     }
 
 
 def _count_definition_splits(centers: set, channels: list) -> int:
-    """Количество несвязанных групп определённых центров."""
+    """Сколько отдельных несвязанных групп определённых центров
+    (Single=1 / Split=2 / Triple Split=3 / Quadruple Split=4)."""
     if not centers:
         return 0
     adjacency = {c: set() for c in centers}
